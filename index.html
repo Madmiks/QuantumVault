@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumVault | Локальное Шифрование</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+        </div>
+        <h2>QuantumVault</h2>
+        <p>Абсолютная конфиденциальность. Шифрование происходит полностью на вашем устройстве.</p>
+    </div>
+    
+    <div class="form-group">
+        <label>Выберите или перетащите файл</label>
+        <div class="dropzone" id="dropArea">
+            <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+            <span class="dropzone-text">Перетащите файл сюда или <span class="highlight">выберите на диске</span></span>
+            <input type="file" id="fileInput">
+        </div>
+        <div id="fileInfo" class="file-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="file-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <span id="fileName"></span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="password">Мастер-пароль</label>
+        <div class="password-wrapper">
+            <input type="password" id="password" placeholder="Минимум 8 символов" autocomplete="off">
+            <button type="button" id="togglePassword" class="toggle-password-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="eye-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button id="encryptBtn" class="btn btn-primary">
+            <span>Зашифровать</span>
+        </button>
+        <button id="decryptBtn" class="btn btn-secondary">
+            <span>Расшифровать</span>
+        </button>
+    </div>
+
+    <div id="statusBox" class="status-box"></div>
+    
+    <a id="downloadLink" class="download-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+        Скачать обработанный файл
+    </a>
+</div>
+
+<script>
+    // --- UI Интерактив ---
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('fileName');
+    const fileInfo = document.getElementById('fileInfo');
+    const dropArea = document.getElementById('dropArea');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+
+    // Показать/скрыть пароль
+    togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        togglePasswordBtn.classList.toggle('active', isPassword);
+    });
+
+    // Обработка выбора файла
+    fileInput.addEventListener('change', (e) => {
+        updateFileInfo(e.target.files[0]);
+    });
+
+    function updateFileInfo(file) {
+        if (file) {
+            fileNameDisplay.textContent = file.name;
+            fileInfo.classList.add('visible');
+        } else {
+            fileInfo.classList.remove('visible');
+        }
+    }
+
+    // Drag & Drop функции
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        fileInput.files = files;
+        updateFileInfo(files[0]);
+    });
+
+    // Статусы и ссылки
+    const statusBox = document.getElementById('statusBox');
+    const downloadLink = document.getElementById('downloadLink');
+
+    function showStatus(message, type = 'info') {
+        statusBox.textContent = message;
+        statusBox.className = `status-box status-${type}`;
+        statusBox.style.display = 'block';
+        if (type === 'error' || type === 'info') {
+            downloadLink.style.display = 'none';
+        }
+    }
+
+    // --- Веб-криптография ---
+    const SALT_LENGTH = 16;
+    const IV_LENGTH = 12;
+    const ITERATIONS = 100000;
+
+    async function deriveKey(password, salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
+        );
+        return await crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: salt, iterations: ITERATIONS, hash: "SHA-256" },
+            keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+        );
+    }
+
+    document.getElementById('encryptBtn').addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        const password = passwordInput.value;
+
+        if (!file || !password) return showStatus('Выберите файл и введите мастер-пароль.', 'error');
+        if (password.length < 8) return showStatus('В целях безопасности пароль должен быть не менее 8 символов.', 'error');
+
+        try {
+            showStatus('Запуск шифрования...', 'info');
+            const arrayBuffer = await file.arrayBuffer();
+            const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+            const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+            const key = await deriveKey(password, salt);
+
+            const encryptedContent = await crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: iv }, key, arrayBuffer
+            );
+
+            const encryptedData = new Uint8Array(salt.length + iv.length + encryptedContent.byteLength);
+            encryptedData.set(salt, 0);
+            encryptedData.set(iv, salt.length);
+            encryptedData.set(new Uint8Array(encryptedContent), salt.length + iv.length);
+
+            const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
+            
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = file.name + '.enc';
+            downloadLink.style.display = 'inline-flex';
+            showStatus('Файл успешно зашифрован и готов к скачиванию.', 'success');
+        } catch (error) {
+            console.error(error);
+            showStatus('Критическая ошибка при шифровании.', 'error');
+        }
+    });
+
+    document.getElementById('decryptBtn').addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        const password = passwordInput.value;
+
+        if (!file || !password) return showStatus('Выберите файл и введите пароль.', 'error');
+
+        try {
+            showStatus('Расшифровка данных...', 'info');
+            const arrayBuffer = await file.arrayBuffer();
+            const data = new Uint8Array(arrayBuffer);
+
+            if (data.length < SALT_LENGTH + IV_LENGTH) {
+                throw new Error("Неверный формат зашифрованного файла.");
+            }
+
+            const salt = data.slice(0, SALT_LENGTH);
+            const iv = data.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+            const ciphertext = data.slice(SALT_LENGTH + IV_LENGTH);
+            const key = await deriveKey(password, salt);
+
+            const decryptedContent = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: iv }, key, ciphertext
+            );
+
+            const blob = new Blob([decryptedContent], { type: 'application/octet-stream' });
+            
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = file.name.replace(/\.enc$/, '') || 'decrypted_file';
+            downloadLink.style.display = 'inline-flex';
+            showStatus('Файл успешно расшифрован!', 'success');
+        } catch (error) {
+            console.error(error);
+            showStatus('Ошибка декодирования: неверный пароль или файл поврежден.', 'error');
+        }
+    });
+</script>
+
+</body>
+</html>
